@@ -1,0 +1,85 @@
+# Validations see the cart *before* the fee-engine cart transform expands it,
+# so fee lines aren't visible here. Instead this mirrors the fee-engine input
+# query and the guard re-runs the engine's rule matching to find which
+# required fees apply. Keep the shared fields in step with
+# extensions/fee-engine/src/cart_transform_run.graphql.
+query CartValidationsGenerateRunInput($collectionIds: [ID!]! = [], $customerTags: [String!]! = []) {
+  buyerJourney {
+    step
+  }
+  presentmentCurrencyRate
+  validation {
+    rules: metafield(namespace: "$app", key: "rules") {
+      jsonValue
+    }
+  }
+  localization {
+    language {
+      isoCode
+    }
+    country {
+      isoCode
+    }
+    market {
+      handle
+    }
+  }
+  shop {
+    settings: metafield(namespace: "$app", key: "checkout-settings") {
+      jsonValue
+    }
+    localTime {
+      date
+    }
+  }
+  cart {
+    acceptedFees: attribute(key: "_accepted_fees") {
+      value
+    }
+    retailLocation {
+      id
+    }
+    buyerIdentity {
+      customer {
+        hasTags(tags: $customerTags) {
+          hasTag
+          tag
+        }
+      }
+      purchasingCompany {
+        company {
+          id
+        }
+      }
+    }
+    lines {
+      id
+      quantity
+      sellingPlanAllocation {
+        sellingPlan {
+          id
+        }
+      }
+      cost {
+        amountPerQuantity {
+          amount
+        }
+      }
+      merchandise {
+        __typename
+        ... on ProductVariant {
+          id
+          weight
+          weightUnit
+          product {
+            id
+            inCollections(ids: $collectionIds) {
+              collectionId
+              isMember
+            }
+          }
+        }
+      }
+    }
+  }
+}

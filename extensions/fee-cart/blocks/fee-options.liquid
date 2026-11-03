@@ -1,0 +1,128 @@
+{%- comment -%}
+  One checkbox per optional fee, plus an "I accept" checkbox per required fee.
+  The list comes from the app-data metafield the app writes on every rule sync.
+  Optional fees update the `_selected_fees` (opt-in) or `_declined_fees`
+  (opt-out) cart attribute, which the fee-engine cart transform reads. Required
+  fees add `ruleId@version` to `_accepted_fees`, which the fee-guard checks,
+  so buyers on any Shopify plan can accept them before checkout.
+{%- endcomment -%}
+{%- assign options = app.metafields.fee_cart.options.value -%}
+{%- assign declined_raw = cart.attributes['_declined_fees'] | default: '' -%}
+{%- assign selected_raw = cart.attributes['_selected_fees'] | default: '' -%}
+{%- assign accepted_raw = cart.attributes['_accepted_fees'] | default: '' -%}
+{%- assign declined = declined_raw | split: ',' -%}
+{%- assign selected = selected_raw | split: ',' -%}
+{%- assign accepted = accepted_raw | split: ',' -%}
+{%- comment -%}
+  Cart subtotal and quantity without fees (variant prices, not the expanded
+  line prices) and without subscription lines, matching the fee engine. Used by
+  fee-options.js to hide fees whose subtotal/quantity limits aren't met.
+{%- endcomment -%}
+{%- assign fee_subtotal = 0 -%}
+{%- assign fee_quantity = 0 -%}
+{%- for item in cart.items -%}
+  {%- if item.selling_plan_allocation -%}{%- continue -%}{%- endif -%}
+  {%- assign fee_subtotal = item.variant.price | times: item.quantity | plus: fee_subtotal -%}
+  {%- assign fee_quantity = fee_quantity | plus: item.quantity -%}
+{%- endfor -%}
+{%- assign shown = 0 -%}
+{%- for fee in options -%}
+  {%- if fee.required or fee.placement != 'CHECKOUT' -%}{%- assign shown = shown | plus: 1 -%}{%- endif -%}
+{%- endfor -%}
+
+{%- if cart.item_count > 0 and shown > 0 -%}
+  <div
+    class="fee-options"
+    data-fee-options
+    data-refresh="{{ block.settings.refresh }}"
+    data-declined="{{ declined_raw | escape }}"
+    data-selected="{{ selected_raw | escape }}"
+    data-accepted="{{ accepted_raw | escape }}"
+    data-subtotal="{{ fee_subtotal }}"
+    data-quantity="{{ fee_quantity }}"
+    {{ block.shopify_attributes }}
+  >
+    {%- if block.settings.heading != blank -%}
+      <p class="fee-options__heading">{{ block.settings.heading | escape }}</p>
+    {%- endif -%}
+    {%- for fee in options -%}
+      {%- unless fee.required -%}
+        {%- if fee.placement == 'CHECKOUT' -%}{%- continue -%}{%- endif -%}
+      {%- endunless -%}
+      {%- if fee.type == 'PERCENTAGE' -%}
+        {%- capture price -%}{{ fee.amount }}%{%- endcapture -%}
+      {%- else -%}
+        {%- capture price -%}{{ fee.amount | times: 100 | round | money }}{%- endcapture -%}
+      {%- endif -%}
+      {%- assign price = price | strip_html | strip -%}
+      {%- if fee.required -%}
+        {%- assign token = fee.id | append: '@' | append: fee.version -%}
+        {%- if accepted contains token -%}{%- assign on = true -%}{%- else -%}{%- assign on = false -%}{%- endif -%}
+      {%- elsif fee.selection == 'OPT_IN' -%}
+        {%- if selected contains fee.id -%}{%- assign on = true -%}{%- else -%}{%- assign on = false -%}{%- endif -%}
+      {%- else -%}
+        {%- if declined contains fee.id -%}{%- assign on = false -%}{%- else -%}{%- assign on = true -%}{%- endif -%}
+      {%- endif -%}
+      <label
+        class="fee-options__row{% if fee.required %} fee-options__row--required{% endif %}"
+        {% if fee.minSubtotal != nil %}data-min-subtotal="{{ fee.minSubtotal }}"{% endif %}
+        {% if fee.maxSubtotal != nil %}data-max-subtotal="{{ fee.maxSubtotal }}"{% endif %}
+        {% if fee.minQuantity != nil %}data-min-quantity="{{ fee.minQuantity }}"{% endif %}
+      >
+        <input
+          type="checkbox"
+          data-fee-id="{{ fee.id | escape }}"
+          data-selection="{{ fee.selection | escape }}"
+          {% if fee.required %}data-token="{{ token | escape }}"{% endif %}
+          {% if on %}checked{% endif %}
+        >
+        <span class="fee-options__text">
+          {%- if fee.required -%}
+            {%- comment -%} Built in an assign: a closing brace inside a string ends an output tag early. {%- endcomment -%}
+            {%- assign label = block.settings.accept_label | replace: '{fee}', fee.name | replace: '{price}', price -%}
+            <span class="fee-options__name">{{ label | escape }}</span>
+          {%- else -%}
+            <span class="fee-options__name">{{ fee.name | escape }}</span>
+          {%- endif -%}
+          {%- if fee.note != blank -%}
+            <span class="fee-options__note">{{ fee.note | escape }}</span>
+          {%- endif -%}
+        </span>
+        {%- unless fee.required -%}
+          <span class="fee-options__price">{{ price | escape }}</span>
+        {%- endunless -%}
+      </label>
+    {%- endfor -%}
+  </div>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Fee options",
+  "target": "section",
+  "javascript": "fee-options.js",
+  "stylesheet": "fee-options.css",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Add-ons"
+    },
+    {
+      "type": "text",
+      "id": "accept_label",
+      "label": "Required fee text",
+      "info": "Shown next to the checkbox for required fees. {fee} and {price} are filled in.",
+      "default": "I accept the {fee} ({price})"
+    },
+    {
+      "type": "checkbox",
+      "id": "refresh",
+      "label": "Refresh the cart after a change",
+      "info": "Reloads the page so the cart total shows the fee change.",
+      "default": true
+    }
+  ]
+}
+{% endschema %}

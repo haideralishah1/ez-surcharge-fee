@@ -1,0 +1,5 @@
+# Cart-page checkboxes for optional fees. Works on every Shopify plan, unlike
+# checkout UI extensions (fee-summary), which need Shopify Plus.
+name = "fee-cart"
+type = "theme"
+uid = "01efc1fe-1c48-4b0f-4a22-37b1f8613614c3e4a587"

@@ -1,0 +1,64 @@
+# Learn more about configuring your checkout UI extension:
+# https://shopify.dev/docs/api/checkout-ui-extensions/latest/configuration
+
+# The version of APIs your extension will receive. Learn more:
+# https://shopify.dev/docs/api/usage/versioning
+api_version = "2026-10"
+
+[[extensions]]
+name = "fee-summary"
+handle = "fee-summary"
+type = "ui_extension"
+uid = "bd284db7-aa43-8290-5f70-e52eda7066eb2e6e4b22"
+
+# Controls where in Shopify your extension will be injected,
+# and the file that contains your extension’s source code. Learn more:
+# https://shopify.dev/docs/api/checkout-ui-extensions/latest/targets
+
+# Fee breakdown in the order summary, right after discounts.
+[[extensions.targeting]]
+module = "./src/FeeSummary.jsx"
+target = "purchase.checkout.reductions.render-after"
+
+# Required-fee acknowledgement, just above the checkout actions.
+[[extensions.targeting]]
+module = "./src/FeeAcceptance.jsx"
+target = "purchase.checkout.actions.render-before"
+
+# Merchant display settings (labels, translations, ordering), written by the app.
+[[extensions.metafields]]
+namespace = "$app"
+key = "checkout-settings"
+owner_type = "SHOP"
+
+# Optional fees and how buyers choose them, written by the app on every sync.
+[[extensions.metafields]]
+namespace = "$app"
+key = "optional-fees"
+owner_type = "SHOP"
+
+[extensions.capabilities]
+# Gives your extension access to directly query Shopify’s storefront API.
+# https://shopify.dev/docs/apps/build/checkout/capabilities#storefront-api-access
+api_access = false
+
+# Gives your extension access to make external network calls, using the
+# JavaScript `fetch()` API. Learn more:
+# https://shopify.dev/docs/apps/build/checkout/capabilities#network-access
+
+# network_access = true
+
+# Learn more about loading metafields on checkout resources, including the cart,
+# products, and customers:
+# https://shopify.dev/docs/api/checkout-ui-extensions/latest#configuration
+
+# Defines settings that will be collected from merchants installing
+# your extension. Learn more:
+# https://shopify.dev/docs/api/checkout-ui-extensions/latest#configuration
+
+# [extensions.settings]
+# [[extensions.settings.fields]]
+# key = "banner_title"
+# type = "single_line_text_field"
+# name = "Banner title"
+# description = "Enter a title for the banner"

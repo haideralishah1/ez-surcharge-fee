@@ -1,0 +1,154 @@
+{
+  "payload": {
+    "export": "cart-transform-run",
+    "target": "cart.transform.run",
+    "input": {
+      "presentmentCurrencyRate": "1.0",
+      "cartTransform": {
+        "metafield": {
+          "jsonValue": {
+            "version": 1,
+            "rules": [
+              {
+                "id": "r1",
+                "name": "Handling",
+                "type": "FIXED",
+                "amount": 5,
+                "scope": "CART",
+                "requirement": "OPTIONAL",
+                "channels": [
+                  "ONLINE_STORE"
+                ],
+                "variantId": "gid://shopify/ProductVariant/900",
+                "conditions": {}
+              },
+              {
+                "id": "r2",
+                "name": "Tariff",
+                "type": "FIXED",
+                "amount": 1,
+                "scope": "CART",
+                "requirement": "OPTIONAL",
+                "channels": [
+                  "ONLINE_STORE"
+                ],
+                "variantId": "gid://shopify/ProductVariant/901",
+                "conditions": {}
+              }
+            ]
+          }
+        }
+      },
+      "localization": {
+        "country": {
+          "isoCode": "US"
+        },
+        "market": {
+          "handle": "us"
+        }
+      },
+      "shop": {
+        "localTime": {
+          "date": "2026-10-27"
+        }
+      },
+      "cart": {
+        "declinedFees": null,
+        "selectedFees": null,
+        "retailLocation": null,
+        "buyerIdentity": {
+          "customer": {
+            "hasTags": []
+          },
+          "purchasingCompany": null
+        },
+        "lines": [
+          {
+            "id": "gid://shopify/CartLine/1",
+            "quantity": 1,
+            "sellingPlanAllocation": null,
+            "cost": {
+              "amountPerQuantity": {
+                "amount": "10.00"
+              }
+            },
+            "merchandise": {
+              "__typename": "ProductVariant",
+              "id": "gid://shopify/ProductVariant/1",
+              "weight": null,
+              "weightUnit": "GRAMS",
+              "product": {
+                "id": "gid://shopify/Product/1",
+                "inCollections": []
+              }
+            }
+          }
+        ]
+      }
+    },
+    "output": {
+      "operations": [
+        {
+          "lineExpand": {
+            "cartLineId": "gid://shopify/CartLine/1",
+            "expandedCartItems": [
+              {
+                "merchandiseId": "gid://shopify/ProductVariant/1",
+                "quantity": 1,
+                "price": {
+                  "adjustment": {
+                    "fixedPricePerUnit": {
+                      "amount": "10.00"
+                    }
+                  }
+                }
+              },
+              {
+                "merchandiseId": "gid://shopify/ProductVariant/900",
+                "quantity": 1,
+                "price": {
+                  "adjustment": {
+                    "fixedPricePerUnit": {
+                      "amount": "5.00"
+                    }
+                  }
+                },
+                "attributes": [
+                  {
+                    "key": "_fee_rule",
+                    "value": "r1"
+                  },
+                  {
+                    "key": "_fee_required",
+                    "value": "0"
+                  }
+                ]
+              },
+              {
+                "merchandiseId": "gid://shopify/ProductVariant/901",
+                "quantity": 1,
+                "price": {
+                  "adjustment": {
+                    "fixedPricePerUnit": {
+                      "amount": "1.00"
+                    }
+                  }
+                },
+                "attributes": [
+                  {
+                    "key": "_fee_rule",
+                    "value": "r2"
+                  },
+                  {
+                    "key": "_fee_required",
+                    "value": "0"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

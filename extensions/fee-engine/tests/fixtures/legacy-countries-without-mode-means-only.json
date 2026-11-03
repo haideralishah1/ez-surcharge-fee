@@ -1,0 +1,84 @@
+{
+  "payload": {
+    "export": "cart-transform-run",
+    "target": "cart.transform.run",
+    "input": {
+      "presentmentCurrencyRate": "1.0",
+      "cartTransform": {
+        "metafield": {
+          "jsonValue": {
+            "version": 1,
+            "rules": [
+              {
+                "id": "r1",
+                "name": "Handling",
+                "type": "FIXED",
+                "amount": 5,
+                "scope": "CART",
+                "requirement": "OPTIONAL",
+                "channels": [
+                  "ONLINE_STORE"
+                ],
+                "variantId": "gid://shopify/ProductVariant/900",
+                "conditions": {
+                  "countries": [
+                    "CA"
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      },
+      "localization": {
+        "country": {
+          "isoCode": "US"
+        },
+        "market": {
+          "handle": "us"
+        }
+      },
+      "shop": {
+        "localTime": {
+          "date": "2026-10-27"
+        }
+      },
+      "cart": {
+        "declinedFees": null,
+        "selectedFees": null,
+        "retailLocation": null,
+        "buyerIdentity": {
+          "customer": {
+            "hasTags": []
+          },
+          "purchasingCompany": null
+        },
+        "lines": [
+          {
+            "id": "gid://shopify/CartLine/1",
+            "quantity": 1,
+            "sellingPlanAllocation": null,
+            "cost": {
+              "amountPerQuantity": {
+                "amount": "10.00"
+              }
+            },
+            "merchandise": {
+              "__typename": "ProductVariant",
+              "id": "gid://shopify/ProductVariant/1",
+              "weight": null,
+              "weightUnit": "GRAMS",
+              "product": {
+                "id": "gid://shopify/Product/1",
+                "inCollections": []
+              }
+            }
+          }
+        ]
+      }
+    },
+    "output": {
+      "operations": []
+    }
+  }
+}

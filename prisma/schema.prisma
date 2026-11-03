@@ -1,0 +1,195 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Note that some adapters may set a maximum length for the String type by default, please ensure your strings are long
+// enough when changing adapters.
+// See https://www.prisma.io/docs/orm/reference/prisma-schema-reference#string for more information
+datasource db {
+  provider = "sqlite"
+  url      = "file:dev.sqlite"
+}
+
+model Session {
+  id            String    @id
+  shop          String
+  state         String
+  isOnline      Boolean   @default(false)
+  scope         String?
+  expires       DateTime?
+  accessToken   String
+  userId        BigInt?
+  firstName     String?
+  lastName      String?
+  email         String?
+  accountOwner  Boolean   @default(false)
+  locale        String?
+  collaborator  Boolean?  @default(false)
+  emailVerified Boolean?  @default(false)
+  refreshToken        String?
+  refreshTokenExpires DateTime?
+}
+
+model FeeRule {
+  id          String   @id @default(cuid())
+  shop        String
+  name        String
+  description String   @default("")
+  active      Boolean  @default(false)
+  // FIXED | PERCENTAGE
+  type        String
+  // Currency amount for FIXED, percent (e.g. 2.5) for PERCENTAGE
+  amount      Float
+  // PRODUCT | CART | ORDER
+  scope       String
+  // OPTIONAL | REQUIRED
+  requirement String   @default("OPTIONAL")
+  // OPTIONAL fees only. OPT_OUT: applied, buyer can untick. OPT_IN: buyer ticks to add.
+  selection   String   @default("OPT_OUT")
+  // OPTIONAL fees only. Where the buyer gets the checkbox: CART | CHECKOUT | BOTH
+  placement   String   @default("BOTH")
+  // JSON array of ONLINE_STORE | POS | DRAFT_ORDER
+  channels    String   @default("[\"ONLINE_STORE\"]")
+  // JSON object, see app/lib/fee-rules.ts (AND logic)
+  conditions  String   @default("{}")
+  // Key into app/lib/icons.ts; also the fee product's image once uploads land
+  icon        String   @default("order-fee")
+  // PER_UNIT | PER_LINE — how a PRODUCT-scope fee repeats
+  frequency   String   @default("PER_UNIT")
+  // Caps on each computed charge, shop currency (percentage fees mostly)
+  minCharge   Float?
+  maxCharge   Float?
+  taxable     Boolean  @default(true)
+  // ALL_PRODUCTS | ANY | ALL — how product/collection rules combine
+  matchMode   String   @default("ALL_PRODUCTS")
+  scheduleEnabled Boolean @default(false)
+  // JSON array of weekday numbers, 0 = Sunday
+  weekdays    String   @default("[]")
+  startDate   String?
+  endDate     String?
+  // ALL | ONLY | EXCEPT — applied to conditions.countries
+  countryMode String   @default("ALL")
+  // JSON array of Shopify Markets handles (Pro)
+  marketHandles String @default("[]")
+  // Short note shown under the fee in checkout
+  shopperNote String   @default("")
+  // Longer plain-text copy shown under the note in checkout
+  details     String   @default("")
+  // Added to orders that contain this fee (orders/create webhook)
+  orderTag    String   @default("")
+  // Synced to the hidden fee variant
+  barcode     String   @default("")
+  // Hidden fee product + variant GIDs, provisioned when the rule is first synced
+  productId   String?
+  variantId   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([shop])
+}
+
+// One row per order that carried at least one fee; drives the Free-plan cap.
+model FeeOrderUsage {
+  orderId   String   @id
+  shop      String
+  // YYYY-MM from the order timestamp, for monthly caps
+  month     String
+  ruleIds   String   @default("[]")
+  // Fee revenue on the order in shop currency, plus per-rule breakdown JSON { ruleId: amount }
+  feeTotal  Float    @default(0)
+  currency  String   @default("")
+  breakdown String   @default("{}")
+  orderName String   @default("")
+  // The order's own timestamp (webhook arrival can lag)
+  orderCreatedAt DateTime?
+  // Set once the order has been handed to integrations, so a retried webhook can't send it twice
+  dispatchedAt DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([shop, month])
+  @@index([shop, orderCreatedAt])
+}
+
+model ShopSettings {
+  shop            String   @id
+  // Orders created before this were already checked for a missed orders/create webhook
+  orderCatchUpAt  DateTime?
+  // gid of this app's CartTransform on the shop, created on first admin load
+  cartTransformId String?
+  // gid of this app's checkout Validation (required-fee guard); enabled only while a required fee is active
+  validationId    String?
+  // Fallback order tag when a fee has none
+  defaultOrderTag String   @default("")
+  // Mark fee line items fulfilled on order creation
+  autoFulfillFees Boolean  @default(false)
+  // Hold checkout if the fee function errors/times out
+  blockOnFailure  Boolean  @default(false)
+  // Run the required-fee validation at all
+  guardEnabled    Boolean  @default(true)
+  showFeesBlock   Boolean  @default(true)
+  showAcceptance  Boolean  @default(true)
+  // CART | NAME | AMOUNT
+  sortOrder       String   @default("CART")
+  // JSON: buyer-facing default strings, see app/lib/settings.server.ts
+  checkoutText    String   @default("{}")
+  // JSON: { locale: { key: string } }
+  translations    String   @default("{}")
+  updatedAt       DateTime @updatedAt
+}
+
+// Per-shop connection to a third-party integration (Settings -> Integrations).
+model IntegrationConnection {
+  id           String    @id @default(cuid())
+  shop         String
+  // Connector key, see app/lib/connectors.server.ts
+  key          String
+  enabled      Boolean   @default(false)
+  // AES-256-GCM encrypted JSON of secrets; never returned to the browser
+  secrets      String    @default("")
+  // Non-secret settings JSON
+  settings     String    @default("{}")
+  // not_connected | connected | error
+  status       String    @default("not_connected")
+  lastError    String    @default("")
+  lastTestedAt DateTime?
+  lastSyncAt   DateTime?
+  updatedAt    DateTime  @updatedAt
+
+  @@unique([shop, key])
+}
+
+// One row per delivery attempt to an integration (shown in the Manage dialog).
+model IntegrationLog {
+  id        String   @id @default(cuid())
+  shop      String
+  key       String
+  orderId   String
+  orderName String   @default("")
+  // sent | skipped | error
+  status    String
+  message   String   @default("")
+  // Remote reference, e.g. invoice number
+  ref       String   @default("")
+  createdAt DateTime @default(now())
+
+  @@index([shop, key, createdAt])
+}
+
+// Store-bound read-only credentials for POST /api/quote (POS / partner surcharge quotes).
+model ApiCredential {
+  id         String    @id @default(cuid())
+  shop       String
+  name       String    @default("")
+  // SHA-256 of the token; the token itself is shown once
+  tokenHash  String    @unique
+  prefix     String
+  createdAt  DateTime  @default(now())
+  lastUsedAt DateTime?
+  revokedAt  DateTime?
+
+  @@index([shop])
+  @@index([prefix])
+}

@@ -1,0 +1,7 @@
+.fee-options { border: 1px solid rgba(var(--color-foreground, 0, 0, 0), 0.15); border-radius: 8px; padding: 12px 16px; margin: 12px 0; text-align: left; }
+.fee-options__heading { margin: 0 0 8px; font-weight: 600; }
+.fee-options__row { display: flex; align-items: center; gap: 10px; padding: 6px 0; cursor: pointer; }
+.fee-options__text { display: flex; flex-direction: column; flex: 1; }
+.fee-options__note { font-size: 0.85em; opacity: 0.7; }
+.fee-options__price { white-space: nowrap; }
+.fee-options[aria-busy="true"] { opacity: 0.6; pointer-events: none; }

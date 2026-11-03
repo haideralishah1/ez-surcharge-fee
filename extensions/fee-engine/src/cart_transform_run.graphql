@@ -1,0 +1,74 @@
+query CartTransformRunInput($collectionIds: [ID!]! = [], $customerTags: [String!]! = []) {
+  presentmentCurrencyRate
+  cartTransform {
+    metafield(namespace: "$app", key: "rules") {
+      jsonValue
+    }
+  }
+  localization {
+    country {
+      isoCode
+    }
+    market {
+      handle
+    }
+  }
+  shop {
+    localTime {
+      date
+    }
+  }
+  cart {
+    declinedFees: attribute(key: "_declined_fees") {
+      value
+    }
+    selectedFees: attribute(key: "_selected_fees") {
+      value
+    }
+    retailLocation {
+      id
+    }
+    buyerIdentity {
+      customer {
+        hasTags(tags: $customerTags) {
+          hasTag
+          tag
+        }
+      }
+      purchasingCompany {
+        company {
+          id
+        }
+      }
+    }
+    lines {
+      id
+      quantity
+      sellingPlanAllocation {
+        sellingPlan {
+          id
+        }
+      }
+      cost {
+        amountPerQuantity {
+          amount
+        }
+      }
+      merchandise {
+        __typename
+        ... on ProductVariant {
+          id
+          weight
+          weightUnit
+          product {
+            id
+            inCollections(ids: $collectionIds) {
+              collectionId
+              isMember
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,113 @@
+{%- comment -%}
+  App embed: hands the optional and required fee list to fee-options.js, which places the
+  checkboxes in the cart page and cart drawer by itself. Prices are formatted
+  here so they follow the shop's money format.
+{%- endcomment -%}
+{%- assign options = app.metafields.fee_cart.options.value -%}
+{%- assign emitted = false -%}
+{%- comment -%} Cart subtotal/quantity without fees or subscription lines, as the fee engine counts them. {%- endcomment -%}
+{%- assign fee_subtotal = 0 -%}
+{%- assign fee_quantity = 0 -%}
+{%- for item in cart.items -%}
+  {%- if item.selling_plan_allocation -%}{%- continue -%}{%- endif -%}
+  {%- assign fee_subtotal = item.variant.price | times: item.quantity | plus: fee_subtotal -%}
+  {%- assign fee_quantity = fee_quantity | plus: item.quantity -%}
+{%- endfor -%}
+<script type="application/json" id="fee-cart-config">
+  {
+    "heading": {{ block.settings.heading | json }},
+    "cartPage": {{ block.settings.cart_page | json }},
+    "drawer": {{ block.settings.drawer | json }},
+    "selector": {{ block.settings.selector | json }},
+    "refresh": {{ block.settings.refresh | json }},
+    "itemCount": {{ cart.item_count | json }},
+    "subtotal": {{ fee_subtotal | json }},
+    "quantity": {{ fee_quantity | json }},
+    "selected": {{ cart.attributes['_selected_fees'] | default: '' | json }},
+    "declined": {{ cart.attributes['_declined_fees'] | default: '' | json }},
+    "accepted": {{ cart.attributes['_accepted_fees'] | default: '' | json }},
+    "options": [
+      {%- for fee in options -%}
+        {%- unless fee.required -%}
+          {%- if fee.placement == 'CHECKOUT' -%}{%- continue -%}{%- endif -%}
+        {%- endunless -%}
+        {%- if fee.type == 'PERCENTAGE' -%}
+          {%- capture price -%}{{ fee.amount }}%{%- endcapture -%}
+        {%- else -%}
+          {%- capture price -%}{{ fee.amount | times: 100 | round | money }}{%- endcapture -%}
+        {%- endif -%}
+        {%- assign price = price | strip_html | strip -%}
+        {%- assign label = fee.name -%}
+        {%- assign token = '' -%}
+        {%- if fee.required -%}
+          {%- assign label = block.settings.accept_label | replace: '{fee}', fee.name | replace: '{price}', price -%}
+          {%- assign token = fee.id | append: '@' | append: fee.version -%}
+        {%- endif -%}
+        {%- if emitted -%},{%- endif -%}
+        {%- assign emitted = true -%}
+        {
+          "id": {{ fee.id | json }},
+          "name": {{ label | json }},
+          "required": {{ fee.required | default: false | json }},
+          "token": {{ token | json }},
+          "note": {{ fee.note | default: '' | json }},
+          "selection": {{ fee.selection | json }},
+          "minSubtotal": {{ fee.minSubtotal | json }},
+          "maxSubtotal": {{ fee.maxSubtotal | json }},
+          "minQuantity": {{ fee.minQuantity | json }},
+          "price": {{ price | json }}
+        }
+      {%- endfor -%}
+    ]
+  }
+</script>
+
+{% schema %}
+{
+  "name": "Fee options (automatic)",
+  "target": "body",
+  "javascript": "fee-options.js",
+  "stylesheet": "fee-options.css",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Add-ons"
+    },
+    {
+      "type": "text",
+      "id": "accept_label",
+      "label": "Required fee text",
+      "info": "Shown next to the checkbox for required fees. {fee} and {price} are filled in.",
+      "default": "I accept the {fee} ({price})"
+    },
+    {
+      "type": "checkbox",
+      "id": "cart_page",
+      "label": "Show on the cart page",
+      "info": "Skipped when the Fee options block is already on the cart page.",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "drawer",
+      "label": "Show in the cart drawer",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "selector",
+      "label": "Custom position (CSS selector)",
+      "info": "Optional. The checkboxes are placed just before the first element that matches, e.g. .cart__ctas"
+    },
+    {
+      "type": "checkbox",
+      "id": "refresh",
+      "label": "Reload the page after a change",
+      "info": "Used when the cart can't refresh itself, so the total shows the fee change.",
+      "default": true
+    }
+  ]
+}
+{% endschema %}
