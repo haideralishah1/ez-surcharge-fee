@@ -1,7 +1,7 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "dac75cbbc1580b6126dbeac81c4d6cf8"
-application_url = "https://example.com"
+application_url = "https://ez-surcharge-fee-production.up.railway.app"
 embedded = true
 name = "ez Surcharge fee"
 
@@ -26,7 +26,7 @@ api_version = "2026-10"
   topics = [ "app/scopes_update" ]
 
 [auth]
-redirect_urls = [ "https://example.com/api/auth" ]
+redirect_urls = [ "https://ez-surcharge-fee-production.up.railway.app/api/auth" ]
 
 [build]
 include_config_on_deploy = true
