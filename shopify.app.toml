@@ -3,7 +3,7 @@
 client_id = "dac75cbbc1580b6126dbeac81c4d6cf8"
 application_url = "https://example.com"
 embedded = true
-name = "ez Surchange fee"
+name = "ez Surcharge fee"
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes

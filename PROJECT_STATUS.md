@@ -1,6 +1,6 @@
 # Fee & Surcharge App — Project Status
 
-_Last updated 2026-10-28. App "ez Surchange fee", org EZ COD Forms, dev store `ez-cod-forms-dev.myshopify.com`._
+_Last updated 2026-10-28. App "ez Surcharge fee", org EZ COD Forms, dev store `ez-cod-forms-dev.myshopify.com`._
 
 Legend: **Verified** = seen working in the dev store · **Built** = code complete, automated checks pass, not yet exercised in the store · **Partial** · **Not started**.
 
