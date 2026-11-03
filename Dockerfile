@@ -33,23 +33,23 @@ RUN npm prune --omit=dev
 # Runtime stage
 #############################################
 FROM node:22-alpine AS runtime
-RUN apk add --no-cache openssl
+# su-exec drops from root to the "node" user after the entrypoint fixes
+# /data's ownership — see docker-entrypoint.sh for why that has to happen
+# at container start, not at build time.
+RUN apk add --no-cache openssl su-exec
 WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
-
-# /data is the persistent volume mount point on Railway. SQLite's file and
-# any future uploaded files must live here — everything else in the image
-# is read-only at runtime.
-RUN mkdir -p /data && chown -R node:node /data /app
 
 COPY --chown=node:node --from=build /app/build ./build
 COPY --chown=node:node --from=build /app/node_modules ./node_modules
 COPY --chown=node:node --from=build /app/package.json ./package.json
 COPY --chown=node:node --from=build /app/prisma ./prisma
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-# Run as a non-root user (the "node" user ships built into this base image).
-USER node
+# Stay root here on purpose — the entrypoint needs root to chown /data,
+# then it execs the real process as the non-root "node" user itself.
 
 EXPOSE 3000
 # No `VOLUME` instruction here on purpose: Railway's build rejects the
@@ -60,6 +60,7 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD wget -qO- "http://127.0.0.1:${PORT:-3000}/health" || exit 1
 
+ENTRYPOINT ["docker-entrypoint.sh"]
 # "docker-start" runs `prisma generate && prisma migrate deploy` (NOT
 # `migrate dev`) before starting the server, so a fresh container boots
 # into a migrated DB. Defined in package.json's "docker-start"/"setup" scripts.
