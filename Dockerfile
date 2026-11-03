@@ -52,7 +52,10 @@ COPY --chown=node:node --from=build /app/prisma ./prisma
 USER node
 
 EXPOSE 3000
-VOLUME ["/data"]
+# No `VOLUME` instruction here on purpose: Railway's build rejects the
+# Dockerfile VOLUME directive outright ("use Railway Volumes" instead) —
+# persistence at /data comes from attaching a Railway Volume to this
+# service in the dashboard (see RAILWAY_SETUP.md), not from this file.
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD wget -qO- "http://127.0.0.1:${PORT:-3000}/health" || exit 1

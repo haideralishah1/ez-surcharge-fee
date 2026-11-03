@@ -53,7 +53,10 @@ railway volume add --mount-path /data
 ```
 
 Without this, every deploy wipes the SQLite database — the volume is what
-makes `/data` survive redeploys and restarts.
+makes `/data` survive redeploys and restarts. Note: don't add a `VOLUME`
+instruction to the Dockerfile for this — Railway's build rejects it
+outright ("docker VOLUME ... is not supported, use Railway Volumes"); the
+dashboard/CLI volume above is the only thing that actually persists `/data`.
 
 ---
 
